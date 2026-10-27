@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>VERITEND | تسجيل الحضور</title>
+  <meta name="theme-color" content="#0f6e66">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%230f6e66'/%3E%3Cpath d='M12 19s-5.5-4.9-5.5-9A5.5 5.5 0 0 1 17.5 10c0 4.1-5.5 9-5.5 9z' fill='none' stroke='%23fff' stroke-width='1.8'/%3E%3Cpath d='M9.6 9.6l2 2.4 2.6-3.6' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E">
+  <style>
+    html, body { margin: 0; height: 100%; background: #f3f5f2; }
+    iframe { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
+    #wait { position: fixed; inset: 0; display: grid; place-items: center; font: 600 15px -apple-system, "Segoe UI", Tahoma, sans-serif; color: #0a5650; }
+  </style>
+</head>
+<body>
+  <div id="wait">VERITEND …</div>
+  <iframe id="app" title="VERITEND" allow="geolocation *; camera *"></iframe>
+<script>
+/* =====================================================================
+   VERITEND - الرابط الثابت
+   الصفحة دي بتفتح نظام الحضور (Apps Script) جواها، وبتحفظ الدخول ورقم الجهاز
+   في ذاكرة الموقع ده، علشان Safari ما يمسحهمش لما التاب يتقفل.
+
+   ⬇️ الحاجة الوحيدة اللي تتغير: رابط صفحة الطلاب (اللي آخره /exec)
+   ===================================================================== */
+var APP_URL = 'https://script.google.com/macros/s/AKfycbwRg4VrFZigDegPAoSn79MA6JYQ_7-CK1VdDdtuL43vpLmDrb23jr-djIzp8mErd7qP/exec';
+
+var PREFIX = 'vt:';
+function readAll() {
+  var o = {};
+  try {
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.indexOf(PREFIX) === 0) o[k.slice(PREFIX.length)] = localStorage.getItem(k);
+    }
+  } catch (e) {}
+  return o;
+}
+
+// الرسايل جاية بس من صفحات جوجل (Apps Script)
+window.addEventListener('message', function (ev) {
+  if (!/^https:\/\/[a-z0-9-]+\.googleusercontent\.com$/.test(ev.origin)) return;
+  var d = ev.data || {};
+  if (d.vt === 'hello') {
+    ev.source.postMessage({ vt: 'state', store: readAll() }, ev.origin);
+  } else if (d.vt === 'set' && typeof d.key === 'string' && /^[a-z_]{1,40}$/.test(d.key)) {
+    try {
+      if (d.value === null || d.value === undefined) localStorage.removeItem(PREFIX + d.key);
+      else localStorage.setItem(PREFIX + d.key, String(d.value).slice(0, 600));
+    } catch (e) {}
+  }
+});
+
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+
+var frame = document.getElementById('app');
+frame.onload = function () { document.getElementById('wait').style.display = 'none'; };
+frame.src = APP_URL + location.search;
+</script>
+</body>
+</html>
